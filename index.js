@@ -1,20 +1,22 @@
+// استيراد المكتبات المطلوبة
 const TelegramBot = require('node-telegram-bot-api');
 const ExcelJS = require('exceljs');
 const { Dropbox } = require('dropbox'); // مكتبة Dropbox
+const fetch = require('node-fetch'); // مكتبة Fetch لتنزيل الملفات
 require('dotenv').config(); 
 const express = require('express');
 
 const app = express();
 const port = process.env.PORT || 4000;
+
+// نقطة اختبار للسيرفر
 app.get('/', (req, res) => {
     res.send('The server is running successfully.');
 });
 
-// التوكن الخاص بـ Telegram
-const token = '7560955160:AAGE29q9IxG8JlFy_WAXlTkLJB-h9QcZRRc'; // استبدل بقيمة التوكن الحقيقي
-
-// التوكن الخاص بـ Dropbox
-const dropboxAccessToken = 'sl.CA9xqOoGVMEoMF-Bju6lIusZVsD0YriZSWgt8S-QdiMVxUg6bOhRbu0bdP9mFSZ_w44jfmlC0l0M2OjX8hTn3GEJPQ6hQ4GU54e2iMlBABM_ahBBKWzlZOHCN9MUeMXHjjs0-R-QjCPk'; // استبدل بقيمة التوكن الحقيقي
+// توكنات Telegram وDropbox
+const token = '7560955160:AAGE29q9IxG8JlFy_WAXlTkLJB-h9QcZRRc'; // توكن Telegram (احفظه في ملف .env)
+const dropboxAccessToken = 'sl.CA9xqOoGVMEoMF-Bju6lIusZVsD0YriZSWgt8S-QdiMVxUg6bOhRbu0bdP9mFSZ_w44jfmlC0l0M2OjX8hTn3GEJPQ6hQ4GU54e2iMlBABM_ahBBKWzlZOHCN9MUeMXHjjs0-R-QjCPk'; // توكن Dropbox (احفظه في ملف .env)
 
 // إنشاء البوت
 const bot = new TelegramBot(token, { polling: true });
@@ -25,13 +27,16 @@ const dbx = new Dropbox({ accessToken: dropboxAccessToken });
 // تخزين البيانات من Excel
 let data = [];
 
-// دالة لتحميل البيانات من Excel
-async function loadDataFromExcel() {
+// ===========================================
+// 🟢 تحميل البيانات من ملف Excel
+// ===========================================
+async function loadDataFromExcel(filePath = 'gas18-11-2024.xlsx') {
     try {
         const workbook = new ExcelJS.Workbook();
-        await workbook.xlsx.readFile('gas18-11-2024.xlsx'); // اسم الملف
+        await workbook.xlsx.readFile(filePath);
         const worksheet = workbook.worksheets[0];
 
+        data = []; // إعادة تعيين البيانات
         worksheet.eachRow((row, rowNumber) => {
             const idNumber = row.getCell(1).value?.toString().trim();
             const name = row.getCell(2).value?.toString().trim();
@@ -69,7 +74,9 @@ async function loadDataFromExcel() {
 // تحميل البيانات عند بدء التشغيل
 loadDataFromExcel();
 
-// أوامر البوت
+// ===========================================
+// 🟢 قائمة الأوامر الخاصة بالبوت
+// ===========================================
 bot.onText(/\/start/, (msg) => {
     const options = {
         reply_markup: {
@@ -78,22 +85,16 @@ bot.onText(/\/start/, (msg) => {
                 [{ text: "📂 رفع ملف Excel", callback_data: 'upload_excel' }],
                 [{ text: "📋 قائمة الأوامر", callback_data: 'help' }],
                 [{ text: "📖 معلومات عن البوت", callback_data: 'about' }],
+                [{ text: "📋 عرض الملفات", callback_data: 'list_files' }]
             ],
         },
     };
     bot.sendMessage(msg.chat.id, "مرحبًا بك! اختر أحد الخيارات التالية:", options);
 });
 
-// استجابة خيار رفع ملف Excel
-bot.on('callback_query', async (query) => {
-    const chatId = query.message.chat.id;
-
-    if (query.data === 'upload_excel') {
-        bot.sendMessage(chatId, "📤 قم بإرسال ملف Excel الذي تريد رفعه.");
-    }
-});
-
-// استلام الملف من المستخدم
+// ===========================================
+// 🟢 رفع ملف Excel إلى Dropbox
+// ===========================================
 bot.on('document', async (msg) => {
     const chatId = msg.chat.id;
     const fileId = msg.document.file_id;
@@ -103,23 +104,64 @@ bot.on('document', async (msg) => {
         // الحصول على رابط التنزيل من Telegram
         const fileLink = await bot.getFileLink(fileId);
 
-        // تحميل الملف إلى Dropbox
+        // تحميل الملف من Telegram
         const response = await fetch(fileLink);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const fileBuffer = await response.buffer();
 
+        // رفع الملف إلى Dropbox
         await dbx.filesUpload({
             path: `/apps/gazatest/${fileName}`,
             contents: fileBuffer,
         });
 
-        bot.sendMessage(chatId, `✅ تم رفع الملف إلى Dropbox بنجاح: ${fileName}`);
+        bot.sendMessage(chatId, `✅ تم رفع الملف "${fileName}" إلى Dropbox بنجاح.`);
     } catch (error) {
-        console.error('حدث خطأ أثناء رفع الملف:', error.message);
-        bot.sendMessage(chatId, "⚠️ حدث خطأ أثناء رفع الملف. يرجى المحاولة مرة أخرى.");
+        console.error('حدث خطأ أثناء رفع الملف:', error);
+        bot.sendMessage(chatId, `⚠️ حدث خطأ أثناء رفع الملف. التفاصيل: ${error.message}`);
     }
 });
 
-// تشغيل السيرفر
+// ===========================================
+// 🟢 عرض قائمة الملفات في Dropbox
+// ===========================================
+bot.onText(/\/list_files/, async (msg) => {
+    const chatId = msg.chat.id;
+
+    try {
+        const response = await dbx.filesListFolder({ path: '/apps/gazatest' });
+        if (response.result.entries.length === 0) {
+            bot.sendMessage(chatId, "📂 لا توجد ملفات حاليًا في Dropbox.");
+            return;
+        }
+
+        const fileList = response.result.entries.map((file) => `- ${file.name}`).join('\n');
+        bot.sendMessage(chatId, `📋 الملفات المتوفرة في Dropbox:\n${fileList}`);
+    } catch (error) {
+        console.error('خطأ أثناء استرداد الملفات:', error);
+        bot.sendMessage(chatId, "⚠️ حدث خطأ أثناء استرداد قائمة الملفات.");
+    }
+});
+
+// ===========================================
+// 🟢 حذف ملف معين من Dropbox
+// ===========================================
+bot.onText(/\/delete_file (.+)/, async (msg, match) => {
+    const chatId = msg.chat.id;
+    const fileName = match[1];
+
+    try {
+        await dbx.filesDeleteV2({ path: `/apps/gazatest/${fileName}` });
+        bot.sendMessage(chatId, `✅ تم حذف الملف "${fileName}" بنجاح من Dropbox.`);
+    } catch (error) {
+        console.error('خطأ أثناء حذف الملف:', error);
+        bot.sendMessage(chatId, `⚠️ حدث خطأ أثناء حذف الملف "${fileName}".`);
+    }
+});
+
+// ===========================================
+// 🟢 تشغيل السيرفر
+// ===========================================
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
