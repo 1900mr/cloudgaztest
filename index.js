@@ -15,8 +15,8 @@ app.get('/', (req, res) => {
 });
 
 // توكنات Telegram وDropbox
-const token = '7560955160:AAGE29q9IxG8JlFy_WAXlTkLJB-h9QcZRRc'; // توكن Telegram (احفظه في ملف .env)
-const dropboxAccessToken = 'sl.CA9xqOoGVMEoMF-Bju6lIusZVsD0YriZSWgt8S-QdiMVxUg6bOhRbu0bdP9mFSZ_w44jfmlC0l0M2OjX8hTn3GEJPQ6hQ4GU54e2iMlBABM_ahBBKWzlZOHCN9MUeMXHjjs0-R-QjCPk'; // توكن Dropbox (احفظه في ملف .env)
+const token = '7560955160:AAGE29q9IxG8JlFy_WAXlTkLJB-h9QcZRRc'; // توكن Telegram (يجب تخزينه في ملف .env)
+const dropboxAccessToken = 'sl.CA9xqOoGVMEoMF-Bju6lIusZVsD0YriZSWgt8S-QdiMVxUg6bOhRbu0bdP9mFSZ_w44jfmlC0l0M2OjX8hTn3GEJPQ6hQ4GU54e2iMlBABM_ahBBKWzlZOHCN9MUeMXHjjs0-R-QjCPk'; // توكن Dropbox (يجب تخزينه في ملف .env)
 
 // إنشاء البوت
 const bot = new TelegramBot(token, { polling: true });
@@ -37,7 +37,7 @@ async function loadDataFromExcel(filePath = 'gas18-11-2024.xlsx') {
         const worksheet = workbook.worksheets[0];
 
         data = []; // إعادة تعيين البيانات
-        worksheet.eachRow((row, rowNumber) => {
+        worksheet.eachRow((row) => {
             const idNumber = row.getCell(1).value?.toString().trim();
             const name = row.getCell(2).value?.toString().trim();
             const province = row.getCell(3).value?.toString().trim();
@@ -65,9 +65,9 @@ async function loadDataFromExcel(filePath = 'gas18-11-2024.xlsx') {
             }
         });
 
-        console.log('تم تحميل البيانات بنجاح.');
+        console.log('✅ تم تحميل البيانات بنجاح.');
     } catch (error) {
-        console.error('حدث خطأ أثناء قراءة ملف Excel:', error.message);
+        console.error('⚠️ حدث خطأ أثناء قراءة ملف Excel:', error.message);
     }
 }
 
@@ -100,6 +100,11 @@ bot.on('document', async (msg) => {
     const fileId = msg.document.file_id;
     const fileName = msg.document.file_name;
 
+    // التحقق من نوع الملف (يجب أن يكون Excel فقط)
+    if (!fileName.endsWith('.xlsx')) {
+        return bot.sendMessage(chatId, "⚠️ الملف الذي أرسلته ليس ملف Excel (.xlsx).");
+    }
+
     try {
         // الحصول على رابط التنزيل من Telegram
         const fileLink = await bot.getFileLink(fileId);
@@ -117,7 +122,7 @@ bot.on('document', async (msg) => {
 
         bot.sendMessage(chatId, `✅ تم رفع الملف "${fileName}" إلى Dropbox بنجاح.`);
     } catch (error) {
-        console.error('حدث خطأ أثناء رفع الملف:', error);
+        console.error('⚠️ حدث خطأ أثناء رفع الملف:', error);
         bot.sendMessage(chatId, `⚠️ حدث خطأ أثناء رفع الملف. التفاصيل: ${error.message}`);
     }
 });
@@ -138,7 +143,7 @@ bot.onText(/\/list_files/, async (msg) => {
         const fileList = response.result.entries.map((file) => `- ${file.name}`).join('\n');
         bot.sendMessage(chatId, `📋 الملفات المتوفرة في Dropbox:\n${fileList}`);
     } catch (error) {
-        console.error('خطأ أثناء استرداد الملفات:', error);
+        console.error('⚠️ خطأ أثناء استرداد الملفات:', error);
         bot.sendMessage(chatId, "⚠️ حدث خطأ أثناء استرداد قائمة الملفات.");
     }
 });
@@ -154,9 +159,23 @@ bot.onText(/\/delete_file (.+)/, async (msg, match) => {
         await dbx.filesDeleteV2({ path: `/apps/gazatest/${fileName}` });
         bot.sendMessage(chatId, `✅ تم حذف الملف "${fileName}" بنجاح من Dropbox.`);
     } catch (error) {
-        console.error('خطأ أثناء حذف الملف:', error);
+        console.error('⚠️ خطأ أثناء حذف الملف:', error);
         bot.sendMessage(chatId, `⚠️ حدث خطأ أثناء حذف الملف "${fileName}".`);
     }
+});
+
+// ===========================================
+// 🟢 تعليمات مساعدة
+// ===========================================
+bot.onText(/\/help/, (msg) => {
+    bot.sendMessage(msg.chat.id, `
+    📋 *قائمة الأوامر المتاحة:*
+    /start - بدء البوت
+    /upload_excel - رفع ملف Excel
+    /list_files - عرض الملفات في Dropbox
+    /delete_file [اسم الملف] - حذف ملف معين
+    /help - عرض قائمة الأوامر
+    `, { parse_mode: 'Markdown' });
 });
 
 // ===========================================
