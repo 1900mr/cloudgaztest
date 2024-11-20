@@ -1,186 +1,50 @@
-// استيراد المكتبات المطلوبة
-const TelegramBot = require('node-telegram-bot-api');
-const ExcelJS = require('exceljs');
-const { Dropbox } = require('dropbox'); // مكتبة Dropbox
-const fetch = require('node-fetch'); // مكتبة Fetch لتنزيل الملفات
-require('dotenv').config(); 
-const express = require('express');
+const fetch = require('node-fetch'); // لتحميل الملفات من Dropbox
+const XLSX = require('xlsx'); // لتحليل ملفات Excel
+const { Telegraf } = require('telegraf'); // مكتبة بوت تلجرام
 
-const app = express();
-const port = process.env.PORT || 4000;
+// توكن البوت ورابط ملف Excel على Dropbox
+const TELEGRAM_BOT_TOKEN = 'your_telegram_bot_token'; // استبدلها بتوكن البوت الخاص بك
+const DROPBOX_FILE_URL = 'https://www.dropbox.com/scl/fi/cdoawhmor12kz9vash45z/upload.xlsx?rlkey=b9rcfe3ell1e5tpgimc71sa5m&st=x5mwvyzm&dl=1'; // استبدلها برابط ملف Excel الخاص بك
 
-// نقطة اختبار للسيرفر
-app.get('/', (req, res) => {
-    res.send('The server is running successfully.');
-});
+// إنشاء البوت باستخدام توكن تلجرام
+const bot = new Telegraf(TELEGRAM_BOT_TOKEN);
 
-// توكنات Telegram وDropbox
-const token = '7560955160:AAGE29q9IxG8JlFy_WAXlTkLJB-h9QcZRRc'; // توكن Telegram (يجب تخزينه في ملف .env)
-const dropboxAccessToken = 'sl.CA9xqOoGVMEoMF-Bju6lIusZVsD0YriZSWgt8S-QdiMVxUg6bOhRbu0bdP9mFSZ_w44jfmlC0l0M2OjX8hTn3GEJPQ6hQ4GU54e2iMlBABM_ahBBKWzlZOHCN9MUeMXHjjs0-R-QjCPk'; // توكن Dropbox (يجب تخزينه في ملف .env)
-
-// إنشاء البوت
-const bot = new TelegramBot(token, { polling: true });
-
-// إعداد Dropbox
-const dbx = new Dropbox({ accessToken: dropboxAccessToken });
-
-// تخزين البيانات من Excel
-let data = [];
-
-// ===========================================
-// 🟢 تحميل البيانات من ملف Excel
-// ===========================================
-async function loadDataFromExcel(filePath = 'gas18-11-2024.xlsx') {
-    try {
-        const workbook = new ExcelJS.Workbook();
-        await workbook.xlsx.readFile(filePath);
-        const worksheet = workbook.worksheets[0];
-
-        data = []; // إعادة تعيين البيانات
-        worksheet.eachRow((row) => {
-            const idNumber = row.getCell(1).value?.toString().trim();
-            const name = row.getCell(2).value?.toString().trim();
-            const province = row.getCell(3).value?.toString().trim();
-            const district = row.getCell(4).value?.toString().trim();
-            const area = row.getCell(5).value?.toString().trim();
-            const distributorId = row.getCell(6).value?.toString().trim();
-            const distributorName = row.getCell(7).value?.toString().trim();
-            const distributorPhone = row.getCell(8).value?.toString().trim();
-            const status = row.getCell(9).value?.toString().trim();
-            const orderDate = row.getCell(12).value?.toString().trim();
-
-            if (idNumber && name) {
-                data.push({
-                    idNumber,
-                    name,
-                    province: province || "غير متوفر",
-                    district: district || "غير متوفر",
-                    area: area || "غير متوفر",
-                    distributorId: distributorId || "غير متوفر",
-                    distributorName: distributorName || "غير متوفر",
-                    distributorPhone: distributorPhone || "غير متوفر",
-                    status: status || "غير متوفر",
-                    orderDate: orderDate || "غير متوفر",
-                });
-            }
-        });
-
-        console.log('✅ تم تحميل البيانات بنجاح.');
-    } catch (error) {
-        console.error('⚠️ حدث خطأ أثناء قراءة ملف Excel:', error.message);
-    }
+// دالة لتحميل البيانات من Dropbox وقراءة الملف
+async function fetchExcelData() {
+  const response = await fetch(DROPBOX_FILE_URL); // تحميل الملف من Dropbox
+  const buffer = await response.buffer(); // تحويل البيانات إلى بايتات
+  const workbook = XLSX.read(buffer, { type: 'buffer' }); // قراءة الملف باستخدام xlsx
+  const sheet = workbook.Sheets[workbook.SheetNames[0]]; // الحصول على الورقة الأولى
+  const data = XLSX.utils.sheet_to_json(sheet, { header: 1 }); // تحويل الورقة إلى مصفوفة
+  return data;
 }
 
-// تحميل البيانات عند بدء التشغيل
-loadDataFromExcel();
+// دالة للبحث عن الشخص في البيانات بناءً على رقم الهوية أو الاسم
+async function searchByIdOrName(query) {
+  const data = await fetchExcelData(); // تحميل البيانات
+  const result = data.find(row =>
+    row[0].toString() === query || row[1].toString().toLowerCase() === query.toLowerCase()
+  ); // البحث عن تطابق رقم الهوية أو الاسم
 
-// ===========================================
-// 🟢 قائمة الأوامر الخاصة بالبوت
-// ===========================================
-bot.onText(/\/start/, (msg) => {
-    const options = {
-        reply_markup: {
-            inline_keyboard: [
-                [{ text: "🔍 البحث برقم الهوية أو الاسم", callback_data: 'search' }],
-                [{ text: "📂 رفع ملف Excel", callback_data: 'upload_excel' }],
-                [{ text: "📋 قائمة الأوامر", callback_data: 'help' }],
-                [{ text: "📖 معلومات عن البوت", callback_data: 'about' }],
-                [{ text: "📋 عرض الملفات", callback_data: 'list_files' }]
-            ],
-        },
-    };
-    bot.sendMessage(msg.chat.id, "مرحبًا بك! اختر أحد الخيارات التالية:", options);
+  if (result) {
+    return `معلومات الشخص:\n${result.join(' | ')}`; // تنسيق النتائج
+  } else {
+    return 'لم يتم العثور على الشخص في البيانات.';
+  }
+}
+
+// التعامل مع الرسائل الواردة من المستخدمين
+bot.on('text', async (ctx) => {
+  const query = ctx.message.text.trim(); // استخراج النص من الرسالة
+  if (query) {
+    const result = await searchByIdOrName(query); // البحث عن الشخص
+    ctx.reply(result); // إرسال النتيجة للمستخدم
+  } else {
+    ctx.reply('يرجى إدخال رقم الهوية أو اسم الشخص.'); // في حالة عدم وجود نص في الرسالة
+  }
 });
 
-// ===========================================
-// 🟢 رفع ملف Excel إلى Dropbox
-// ===========================================
-bot.on('document', async (msg) => {
-    const chatId = msg.chat.id;
-    const fileId = msg.document.file_id;
-    const fileName = msg.document.file_name;
-
-    // التحقق من نوع الملف (يجب أن يكون Excel فقط)
-    if (!fileName.endsWith('.xlsx')) {
-        return bot.sendMessage(chatId, "⚠️ الملف الذي أرسلته ليس ملف Excel (.xlsx).");
-    }
-
-    try {
-        // الحصول على رابط التنزيل من Telegram
-        const fileLink = await bot.getFileLink(fileId);
-
-        // تحميل الملف من Telegram
-        const response = await fetch(fileLink);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const fileBuffer = await response.buffer();
-
-        // رفع الملف إلى Dropbox
-        await dbx.filesUpload({
-            path: `/apps/gazatest/${fileName}`,
-            contents: fileBuffer,
-        });
-
-        bot.sendMessage(chatId, `✅ تم رفع الملف "${fileName}" إلى Dropbox بنجاح.`);
-    } catch (error) {
-        console.error('⚠️ حدث خطأ أثناء رفع الملف:', error);
-        bot.sendMessage(chatId, `⚠️ حدث خطأ أثناء رفع الملف. التفاصيل: ${error.message}`);
-    }
-});
-
-// ===========================================
-// 🟢 عرض قائمة الملفات في Dropbox
-// ===========================================
-bot.onText(/\/list_files/, async (msg) => {
-    const chatId = msg.chat.id;
-
-    try {
-        const response = await dbx.filesListFolder({ path: '/apps/gazatest' });
-        if (response.result.entries.length === 0) {
-            bot.sendMessage(chatId, "📂 لا توجد ملفات حاليًا في Dropbox.");
-            return;
-        }
-
-        const fileList = response.result.entries.map((file) => `- ${file.name}`).join('\n');
-        bot.sendMessage(chatId, `📋 الملفات المتوفرة في Dropbox:\n${fileList}`);
-    } catch (error) {
-        console.error('⚠️ خطأ أثناء استرداد الملفات:', error);
-        bot.sendMessage(chatId, "⚠️ حدث خطأ أثناء استرداد قائمة الملفات.");
-    }
-});
-
-// ===========================================
-// 🟢 حذف ملف معين من Dropbox
-// ===========================================
-bot.onText(/\/delete_file (.+)/, async (msg, match) => {
-    const chatId = msg.chat.id;
-    const fileName = match[1];
-
-    try {
-        await dbx.filesDeleteV2({ path: `/apps/gazatest/${fileName}` });
-        bot.sendMessage(chatId, `✅ تم حذف الملف "${fileName}" بنجاح من Dropbox.`);
-    } catch (error) {
-        console.error('⚠️ خطأ أثناء حذف الملف:', error);
-        bot.sendMessage(chatId, `⚠️ حدث خطأ أثناء حذف الملف "${fileName}".`);
-    }
-});
-
-// ===========================================
-// 🟢 تعليمات مساعدة
-// ===========================================
-bot.onText(/\/help/, (msg) => {
-    bot.sendMessage(msg.chat.id, `
-    📋 *قائمة الأوامر المتاحة:*
-    /start - بدء البوت
-    /upload_excel - رفع ملف Excel
-    /list_files - عرض الملفات في Dropbox
-    /delete_file [اسم الملف] - حذف ملف معين
-    /help - عرض قائمة الأوامر
-    `, { parse_mode: 'Markdown' });
-});
-
-// ===========================================
-// 🟢 تشغيل السيرفر
-// ===========================================
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+// بدء تشغيل البوت
+bot.launch().then(() => {
+  console.log('بوت تلجرام يعمل الآن!');
 });
