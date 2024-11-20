@@ -1,27 +1,16 @@
 {
-  "name": "telegram-bot-students",
+  "name": "telegram-bot",
   "version": "1.0.0",
-  "description": "Telegram bot to fetch student results from an Excel file.",
+  "description": "Telegram bot to fetch data from an Excel file hosted on Dropbox.",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "start": "node index.js"
   },
   "dependencies": {
-    "dotenv": "^16.4.5",
-    "exceljs": "^4.4.0",
-    "express": "^4.21.1",
-    "node-telegram-bot-api": "^0.66.0",
-    "axios": "^1.5.0",
-    "dropbox": "^10.34.0"
+    "node-fetch": "^3.3.2",
+    "telegraf": "^4.12.3",
+    "xlsx": "^0.18.5"
   },
-  "devDependencies": {
-    "nodemon": "^3.0.0"
-  },
-  "author": "اسمك",
-  "license": "ISC",
-  "repository": {
-    "type": "git",
-    "url": "رابط المشروع على GitHub"
-  }
+  "author": "Your Name",
+  "license": "MIT"
 }
