@@ -1,6 +1,6 @@
-const fetch = require('node-fetch'); // لتحميل الملفات من Dropbox
-const XLSX = require('xlsx'); // لتحليل ملفات Excel
-const { Telegraf } = require('telegraf'); // مكتبة بوت تلجرام
+import fetch from 'node-fetch'; // لتحميل الملفات من Dropbox
+import XLSX from 'xlsx'; // لتحليل ملفات Excel
+import { Telegraf } from 'telegraf'; // مكتبة بوت تلجرام
 
 // توكن البوت ورابط ملف Excel على Dropbox
 const TELEGRAM_BOT_TOKEN = '7560955160:AAGE29q9IxG8JlFy_WAXlTkLJB-h9QcZRRc'; // استبدلها بتوكن البوت الخاص بك
