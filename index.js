@@ -3,20 +3,17 @@ import XLSX from 'xlsx'; // لتحليل ملفات Excel
 import { Telegraf } from 'telegraf'; // مكتبة بوت تلجرام
 import express from 'express'; // مكتبة express لإنشاء خادم HTTP
 import { Dropbox } from 'dropbox'; // مكتبة Dropbox لإدارة الملفات
-import fs from 'fs'; // للتعامل مع الملفات محليًا
 
 // إعداد التوكنات وروابط Dropbox
-const TELEGRAM_BOT_TOKEN = 'توكن البوت هنا'; // استبدلها بتوكن البوت الخاص بك
-const DROPBOX_ACCESS_TOKEN = 'توكن دروبوكس هنا'; // استبدلها بتوكن Dropbox الخاص بك
-const DROPBOX_FILE_PATH = '/upload.xlsx'; // مسار الملف على Dropbox
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN; // توكن البوت
+const DROPBOX_ACCESS_TOKEN = process.env.DROPBOX_ACCESS_TOKEN; // توكن Dropbox
+const DROPBOX_FILE_PATH = '/upload.xlsx'; // اسم الملف الرئيسي على Dropbox
 
-// إنشاء البوت باستخدام توكن تلجرام
+// إعداد البوت وDropbox
 const bot = new Telegraf(TELEGRAM_BOT_TOKEN);
-
-// إعداد Dropbox
 const dbx = new Dropbox({ accessToken: DROPBOX_ACCESS_TOKEN });
 
-// إنشاء خادم express
+// إنشاء خادم Express
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -30,11 +27,11 @@ async function fetchExcelData() {
     return XLSX.utils.sheet_to_json(sheet, { header: 1 });
   } catch (error) {
     console.error('❌ Error fetching Excel file:', error);
-    throw new Error('❌ تعذر تحميل ملف البيانات. يرجى المحاولة لاحقًا.');
+    throw new Error('❌ تعذر تحميل ملف البيانات. يرجى رفع ملف جديد.');
   }
 }
 
-// دالة للبحث وتنسيق النتيجة ديناميكيًا
+// دالة للبحث عن البيانات في الملف
 async function searchByIdOrName(query) {
   try {
     const data = await fetchExcelData();
@@ -60,7 +57,7 @@ async function searchByIdOrName(query) {
   }
 }
 
-// التعامل مع الرسائل الواردة من المستخدمين
+// التعامل مع الرسائل والأوامر
 bot.start((ctx) => {
   ctx.reply('👋 *مرحبًا!*\n\n📄 أرسل رقم الهوية أو اسم الشخص للحصول على المعلومات.\n📤 لرفع ملف جديد، أرسل الأمر /upload_file.', { parse_mode: 'Markdown' });
 });
@@ -76,21 +73,20 @@ bot.on('document', async (ctx) => {
     const response = await fetch(fileUrl.href);
     const fileBuffer = await response.buffer();
 
-    // رفع الملف إلى Dropbox
+    // رفع الملف إلى Dropbox واستبداله بالقديم
     await dbx.filesUpload({
       path: DROPBOX_FILE_PATH,
       contents: fileBuffer,
       mode: { ".tag": "overwrite" },
     });
 
-    ctx.reply('✅ تم رفع الملف الجديد بنجاح!');
+    ctx.reply('✅ تم رفع الملف الجديد بنجاح وهو الآن قيد الاستخدام!');
   } catch (error) {
     console.error('❌ Error uploading file:', error);
     ctx.reply('❌ حدث خطأ أثناء رفع الملف. يرجى المحاولة مرة أخرى.');
   }
 });
 
-// ربط البوت بـ Express
 app.get('/', (req, res) => {
   res.send('✅ البوت يعمل في الخلفية.');
 });
