@@ -5,7 +5,7 @@ import express from 'express'; // مكتبة express لإنشاء خادم HTTP
 import { Dropbox } from 'dropbox'; // مكتبة Dropbox لإدارة الملفات
 
 // إعداد التوكنات وروابط Dropbox
-const TELEGRAM_BOT_TOKEN = '7560955160:AAGE29q9IxG8JlFy_WAXlTkLJB-h9QcZRRc'; // توكن البوت
+const TELEGRAM_BOT_TOKEN = '7560955160:AAGE29q9IxG8JlFy_WAXlTkLJB-h9QcZRRc'; // توكن التلجرام
 const DROPBOX_ACCESS_TOKEN = 'sl.CBExzCw1apADaDPQGzPtyCGVw6g5rIw4wVWAM2adGqAz7I5USYdigIBwoRi2_k6jb4QLh4WdqtEPjyRGTUNbbRsivLm6hMFd0wbKzZypS0AcDp8jxg2sUMlj06lXKY2i6nY_N-ouDrYI'; // توكن Dropbox
 const DROPBOX_FILE_PATH = '/upload.xlsx'; // اسم الملف الرئيسي على Dropbox
 
