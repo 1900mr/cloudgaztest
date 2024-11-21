@@ -6,7 +6,7 @@ import { Dropbox } from 'dropbox'; // مكتبة Dropbox لإدارة الملف
 
 // إعداد التوكنات وروابط Dropbox
 const TELEGRAM_BOT_TOKEN = '7560955160:AAGE29q9IxG8JlFy_WAXlTkLJB-h9QcZRRc'; // توكن البوت
-const DROPBOX_ACCESS_TOKEN = 'sl.CBGl5n9OPP6QUnnHKeXcyPUHdDwB_lZuzbIk5G4LkJOVhQRuHc4ACVfPtQ2EieXmVUfo7iSfcDHaxUKP9ILfWEtq3m7J0e__LGfOok3LSEAtBkrG-CfCa5EomYvRIUlWgQkzsp74BxXz'; // توكن Dropbox
+const DROPBOX_ACCESS_TOKEN = 'sl.CBExzCw1apADaDPQGzPtyCGVw6g5rIw4wVWAM2adGqAz7I5USYdigIBwoRi2_k6jb4QLh4WdqtEPjyRGTUNbbRsivLm6hMFd0wbKzZypS0AcDp8jxg2sUMlj06lXKY2i6nY_N-ouDrYI'; // توكن Dropbox
 const DROPBOX_FILE_PATH = '/upload.xlsx'; // اسم الملف الرئيسي على Dropbox
 
 // إعداد البوت وDropbox
