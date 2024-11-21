@@ -5,8 +5,8 @@ import express from 'express'; // مكتبة express لإنشاء خادم HTTP
 import { Dropbox } from 'dropbox'; // مكتبة Dropbox لإدارة الملفات
 
 // إعداد التوكنات وروابط Dropbox
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN; // توكن البوت
-const DROPBOX_ACCESS_TOKEN = process.env.DROPBOX_ACCESS_TOKEN; // توكن Dropbox
+const TELEGRAM_BOT_TOKEN = '7560955160:AAGE29q9IxG8JlFy_WAXlTkLJB-h9QcZRRc'; // توكن البوت
+const DROPBOX_ACCESS_TOKEN = 'sl.CBFP97y8Qfa0l7aotIS-WScZKY5AUUipSpwP8dp9v8x93jBO7EX22P7i1vtYYVMtYfOYIVMZMjUcquCzgwNwV4ucZz14NDfIP7i3ehTnLgP_Prdvlda0hseN-M8Bh4f49SbmGKiR1WmV'; // توكن Dropbox
 const DROPBOX_FILE_PATH = '/upload.xlsx'; // اسم الملف الرئيسي على Dropbox
 
 // إعداد البوت وDropbox
@@ -59,7 +59,7 @@ async function searchByIdOrName(query) {
 
 // التعامل مع الرسائل والأوامر
 bot.start((ctx) => {
-  ctx.reply('👋 *مرحبًا!*\n\n📄 أرسل رقم الهوية أو اسم الشخص للحصول على المعلومات.\n📤 لرفع ملف جديد، أرسل الأمر /upload_file.', { parse_mode: 'Markdown' });
+  ctx.reply('👋 مرحبًا!\n\n📄 أرسل رقم الهوية أو اسم الشخص للحصول على المعلومات.\n📤 لرفع ملف جديد، أرسل الأمر /upload_file.');
 });
 
 bot.command('upload_file', (ctx) => {
