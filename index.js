@@ -1,8 +1,8 @@
-const TelegramBot = require('node-telegram-bot-api');
-const ExcelJS = require('exceljs'); // استيراد مكتبة exceljs
-const fetch = require('node-fetch'); // لتحميل الملفات من Dropbox
-require('dotenv').config(); // إذا كنت تستخدم متغيرات بيئية
-const express = require('express'); // إضافة Express لتشغيل السيرفر
+import TelegramBot from 'node-telegram-bot-api';
+import ExcelJS from 'exceljs'; // استيراد مكتبة exceljs
+import fetch from 'node-fetch'; // لتحميل الملفات من Dropbox
+import dotenv from 'dotenv'; // إذا كنت تستخدم متغيرات بيئية
+import express from 'express'; // إضافة Express لتشغيل السيرفر
 
 // إعداد سيرفر Express (لتشغيل التطبيق على Render أو في بيئة محلية)
 const app = express();
@@ -28,7 +28,6 @@ const DROPBOX_FILE_URLS = [
     'https://www.dropbox.com/scl/fi/cdoawhmor12kz9vash45z/upload.xlsx?rlkey=b9rcfe3ell1e5tpgimc71sa5m&st=x5mwvyzm&dl=1',
     'https://www.dropbox.com/scl/fi/5eu49co5t4adlwcuf31cb/kan.xlsx?rlkey=uxcigf215rg0xojcpq73olyf7&st=l2ak33gq&dl=1',
     'https://www.dropbox.com/scl/fi/wzr3ixwn9cvxwnh3k2x85/rfh.xlsx?rlkey=25ty5w4p9iw01pr37lo3l028f&st=39ikyxsg&dl=1',
-    
     // أضف المزيد من الروابط حسب الحاجة
 ];
 
