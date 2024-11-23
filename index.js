@@ -14,7 +14,7 @@ app.get('/', (req, res) => {
 });
 
 // استبدال بـ توكن البوت الخاص بك
-const token = process.env.TELEGRAM_BOT_TOKEN || '7560955160:AAGE29q9IxG8JlFy_WAXlTkLJB-h9QcZRRc';  // استبدل هذا بـ توكن البوت الخاص بك
+const token = process.env.TELEGRAM_BOT_TOKEN || '7560955160:AAHakMcFzXTDTd6wJpdqw2WNFdSW46w0524';  // استبدل هذا بـ توكن البوت الخاص بك
 
 // إنشاء البوت باستخدام Telegraf
 const bot = new Telegraf(token);
