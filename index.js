@@ -4,7 +4,7 @@ import { Telegraf } from 'telegraf'; // مكتبة بوت تلجرام
 import express from 'express'; // مكتبة express لإنشاء خادم HTTP
 
 // توكن البوت ورابط ملف Excel على Dropbox
-const TELEGRAM_BOT_TOKEN = '7560955160:AAGE29q9IxG8JlFy_WAXlTkLJB-h9QcZRRc';
+const TELEGRAM_BOT_TOKEN = '7560955160:AAHakMcFzXTDTd6wJpdqw2WNFdSW46w0524';
 const DROPBOX_FILE_URLS = [
   'https://www.dropbox.com/scl/fi/cdoawhmor12kz9vash45z/upload.xlsx?rlkey=b9rcfe3ell1e5tpgimc71sa5m&st=x5mwvyzm&dl=1',
   'https://www.dropbox.com/scl/fi/5eu49co5t4adlwcuf31cb/kan.xlsx?rlkey=uxcigf215rg0xojcpq73olyf7&st=l2ak33gq&dl=1',
