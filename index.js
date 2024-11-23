@@ -19,19 +19,25 @@ const app = express();
 const port = process.env.PORT || 3000; // استخدام المنفذ المحدد في Render أو 3000 إذا لم يكن محددًا
 
 // دالة لتحميل البيانات من Dropbox وقراءة الملف
-async function fetchExcelData(url) {
+async function fetchExcelData(url, retries = 3) {
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, { timeout: 10000 }); // تعيين مهلة 10 ثواني
     if (!response.ok) {
       throw new Error('⚠️ فشل تحميل الملف من Dropbox');
     }
-    const buffer = await response.buffer();
+    const arrayBuffer = await response.arrayBuffer(); // استخدام arrayBuffer بدلاً من buffer
+    const buffer = Buffer.from(arrayBuffer); // تحويل arrayBuffer إلى Buffer
     const workbook = XLSX.read(buffer, { type: 'buffer' });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     return XLSX.utils.sheet_to_json(sheet, { header: 1 });
   } catch (error) {
     console.error('❌ Error fetching or processing Excel file:', error);
-    throw new Error('❌ تعذر تحميل ملف البيانات. يرجى المحاولة لاحقًا.');
+    if (retries > 0) {
+      console.log(`🔄 إعادة المحاولة... تبقى ${retries} محاولة`);
+      return fetchExcelData(url, retries - 1); // محاولة أخرى
+    } else {
+      throw new Error('❌ تعذر تحميل ملف البيانات. يرجى المحاولة لاحقًا.');
+    }
   }
 }
 
